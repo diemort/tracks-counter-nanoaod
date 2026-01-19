@@ -147,15 +147,46 @@ df.Histo1D("DileptonTrk_nTracksPV").Draw()
 
 ---
 
-## Logging and Debugging
+## Verbosity and Logging Control
 
-The producer emits detailed runtime logs via:
+The `DileptonTrackMultiplicityProducer` includes a **runtime verbosity switch**
+designed for **debugging and validation only**, without affecting physics output
+or NanoAOD content.
 
-```cpp
-edm::LogPrint("DileptonTrackMultiplicity")
+### Verbosity Parameter
+
+The producer exposes:
+
+```python
+verbose = cms.int32(0)
 ```
 
-To enable full verbosity:
+- `0` (default): **silent mode**, suitable for production
+- `1`: **verbose mode**, prints per-event diagnostic information
+
+### What Verbose Mode Prints
+
+When `verbose = 1`, the producer logs:
+
+- run / lumi / event identifiers
+- reference vertex position (`zRef`)
+- computed track multiplicity (`nTracksPV`)
+- confirmation of NanoAOD table creation and filling
+
+This is useful for:
+- validating the dilepton vertex definition,
+- inspecting pileup sensitivity,
+- debugging track selection cuts.
+
+### Enabling Verbose Output
+
+Verbose logging requires **both**:
+
+```python
+process.dileptonTrackMultiplicity.verbose = 1
+```
+
+and enabling the MessageLogger category:
 
 ```python
 process.MessageLogger.cerr.enable = True
@@ -166,7 +197,7 @@ process.MessageLogger.cerr.DileptonTrackMultiplicity = cms.untracked.PSet(
 
 ---
 
-## Known Pitfalls (Lessons Learned)
+## Known Pitfalls
 
 - Do not write event-level quantities as extension tables.
 - `edmDumpEventContent` is not reliable for NanoAOD FlatTables.
@@ -182,11 +213,10 @@ process.MessageLogger.cerr.DileptonTrackMultiplicity = cms.untracked.PSet(
 - Split counts by pT threshold
 - Add pileup-sensitive sidebands
 - Store `zRef` itself for validation
-- Add ΔR-based lepton veto
+- Add DeltaR-based lepton veto
 
 ---
 
 ## Notes
 
-Developed and validated primarily in **CMSSW_15_0_17**, with cross-checks in
-**CMSSW_12_5_X**. Designed for exclusive dilepton + PPS analyses.
+Developed and validated primarily in **CMSSW_12_5_0**. Designed for exclusive dilepton + PPS analyses.
