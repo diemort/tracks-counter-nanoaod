@@ -70,6 +70,25 @@ If only *additional tracks* are desired, leptons must be explicitly excluded.
 
 ---
 
+## Track Kinematics Stored in NanoAOD
+
+In addition to the event-level multiplicity, the producer can be extended
+to store **per-track kinematic and quality information** in a separate
+FlatTable (non-singleton):
+
+- `Track_pt`  — transverse momentum
+- `Track_eta` — pseudorapidity
+- `Track_phi` — azimuthal angle
+- `Track_dz`  — longitudinal distance to dilepton vertex
+- `Track_dxy` — transverse impact parameter
+- `Track_layers` — tracker layers with measurement
+- `Track_chi2` — normalized χ²
+- `Track_highPurity` — track quality flag
+
+These variables allow detailed studies of pileup structure and exclusivity.
+
+---
+
 ## Implementation Details
 
 ### C++ Producer
@@ -99,96 +118,28 @@ Trying to save an extension table before having saved the corresponding main tab
 
 ---
 
-## Configuration (CMSSW)
-
-Example configuration snippet:
-
-```python
-process.load("PhysicsTools.NanoAOD.dileptonTrackMultiplicity_cfi")
-
-process.nanoTableTaskFS.add(process.dileptonTrackMultiplicity)
-
-process.nanoAOD_step = cms.Path(
-    process.nanoSequenceMC *
-    process.dileptonTrackMultiplicity
-)
-```
-
-The table is written automatically by the `NanoAODOutputModule` when using:
-
-```python
-process.NANOAODSIMoutput.outputCommands.append(
-    "keep nanoaodFlatTable_*_*_*"
-)
-```
-
----
-
-## Output in NanoAOD
-
-The following branch appears in the `Events` tree:
-
-```
-DileptonTrk_nTracksPV
-```
-
-Example ROOT usage:
-
-```cpp
-Events->Scan("DileptonTrk_nTracksPV");
-```
-
-or in Python:
-
-```python
-df = ROOT.RDataFrame("Events", "test.root")
-df.Histo1D("DileptonTrk_nTracksPV").Draw()
-```
-
----
-
 ## Verbosity and Logging Control
 
-The `DileptonTrackMultiplicityProducer` includes a **runtime verbosity switch**
-designed for **debugging and validation only**, without affecting physics output
-or NanoAOD content.
-
-### Verbosity Parameter
-
-The producer exposes:
+The producer supports a runtime verbosity flag:
 
 ```python
-verbose = cms.int32(0)
+verbose = cms.untracked.int32(0)
 ```
 
-- `0` (default): **silent mode**, suitable for production
-- `1`: **verbose mode**, prints per-event diagnostic information
+- `0` (default): silent mode (production)
+- `1`: per-event diagnostic output
 
-### What Verbose Mode Prints
-
-When `verbose = 1`, the producer logs:
+When enabled, the producer logs:
 
 - run / lumi / event identifiers
-- reference vertex position (`zRef`)
+- dilepton reference vertex (`zRef`)
 - computed track multiplicity (`nTracksPV`)
-- confirmation of NanoAOD table creation and filling
 
-This is useful for:
-- validating the dilepton vertex definition,
-- inspecting pileup sensitivity,
-- debugging track selection cuts.
-
-### Enabling Verbose Output
-
-Verbose logging requires **both**:
+To activate logging:
 
 ```python
 process.dileptonTrackMultiplicity.verbose = 1
-```
 
-and enabling the MessageLogger category:
-
-```python
 process.MessageLogger.cerr.enable = True
 process.MessageLogger.cerr.DileptonTrackMultiplicity = cms.untracked.PSet(
     limit = cms.untracked.int32(1000000)
@@ -207,16 +158,7 @@ process.MessageLogger.cerr.DileptonTrackMultiplicity = cms.untracked.PSet(
 
 ---
 
-## Possible Extensions
-
-- Exclude lepton tracks from the count
-- Split counts by pT threshold
-- Add pileup-sensitive sidebands
-- Store `zRef` itself for validation
-- Add DeltaR-based lepton veto
-
----
-
 ## Notes
 
-Developed and validated primarily in **CMSSW_12_5_0**. Designed for exclusive dilepton + PPS analyses.
+Developed and validated primarily in **CMSSW_12_5_0**.
+Designed for exclusive dilepton + PPS analyses.
